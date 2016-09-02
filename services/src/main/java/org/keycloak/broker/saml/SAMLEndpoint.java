@@ -296,6 +296,20 @@ public class SAMLEndpoint {
                 SubjectType.STSubType subType = subject.getSubType();
                 NameIDType subjectNameID = (NameIDType) subType.getBaseID();
                 //Map<String, String> notes = new HashMap<>();
+                if (subjectNameID.getFormat() != null && subjectNameID.getFormat().toString().equals(JBossSAMLURIConstants.NAMEID_FORMAT_TRANSIENT.get())) {
+                	if (assertion.getAttributeStatements() != null ) {
+                		for (AttributeStatementType attrStatement : assertion.getAttributeStatements()) {
+                			for (AttributeStatementType.ASTChoiceType choice : attrStatement.getAttributes()) {
+                				AttributeType attribute = choice.getAttribute();
+                                if (attribute.getFriendlyName().equals("eduPersonTargetID") || attribute.getName().equals("urn:oid:1.3.6.1.4.1.5923.1.1.1.10")) {
+                                	if (!attribute.getAttributeValue().isEmpty()) {
+                                		subjectNameID = (NameIDType) attribute.getAttributeValue().get(0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 BrokeredIdentityContext identity = new BrokeredIdentityContext(subjectNameID.getValue());
                 identity.setCode(relayState);
                 identity.getContextData().put(SAML_LOGIN_RESPONSE, responseType);
