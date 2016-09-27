@@ -174,8 +174,8 @@ public class BaseWriter {
                         writeStringAttributeValue((String) attributeValue);
                     } else if (attributeValue instanceof NameIDType) {
                     	writeNameIDTypeAttributeValue((NameIDType) attributeValue);
-                    } else
-                        throw logger.writerUnsupportedAttributeValueError(attributeValue.getClass().getName());
+                    } //else
+                        //throw logger.writerUnsupportedAttributeValueError(attributeValue.getClass().getName());
                 }
             }
         }

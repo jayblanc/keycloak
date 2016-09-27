@@ -106,7 +106,6 @@ public class SAMLEndpoint {
     @Context
     private HttpHeaders headers;
 
-
     public SAMLEndpoint(RealmModel realm, SAMLIdentityProvider provider, SAMLIdentityProviderConfig config, IdentityProvider.AuthenticationCallback callback) {
         this.realm = realm;
         this.config = config;
@@ -123,19 +122,18 @@ public class SAMLEndpoint {
 
     @GET
     public Response redirectBinding(@QueryParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
-                                    @QueryParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
-                                    @QueryParam(GeneralConstants.RELAY_STATE) String relayState)  {
+            @QueryParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
+            @QueryParam(GeneralConstants.RELAY_STATE) String relayState) {
         return new RedirectBinding().execute(samlRequest, samlResponse, relayState);
     }
-
 
     /**
      */
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response postBinding(@FormParam(GeneralConstants.SAML_REQUEST_KEY) String samlRequest,
-                                @FormParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
-                                @FormParam(GeneralConstants.RELAY_STATE) String relayState) {
+            @FormParam(GeneralConstants.SAML_RESPONSE_KEY) String samlResponse,
+            @FormParam(GeneralConstants.RELAY_STATE) String relayState) {
         return new PostBinding().execute(samlRequest, samlResponse, relayState);
     }
 
@@ -170,9 +168,13 @@ public class SAMLEndpoint {
         }
 
         protected abstract String getBindingType();
+
         protected abstract void verifySignature(String key, SAMLDocumentHolder documentHolder) throws VerificationException;
+
         protected abstract SAMLDocumentHolder extractRequestDocument(String samlRequest);
+
         protected abstract SAMLDocumentHolder extractResponseDocument(String response);
+
         protected PublicKey getIDPKey() {
             X509Certificate certificate = null;
             try {
@@ -186,9 +188,12 @@ public class SAMLEndpoint {
         public Response execute(String samlRequest, String samlResponse, String relayState) {
             event = new EventBuilder(realm, session, clientConnection);
             Response response = basicChecks(samlRequest, samlResponse);
-            if (response != null) return response;
-            if (samlRequest != null) return handleSamlRequest(samlRequest, relayState);
-            else return handleSamlResponse(samlResponse, relayState);
+            if (response != null)
+                return response;
+            if (samlRequest != null)
+                return handleSamlRequest(samlRequest, relayState);
+            else
+                return handleSamlResponse(samlResponse, relayState);
         }
 
         protected Response handleSamlRequest(String samlRequest, String relayState) {
@@ -240,7 +245,7 @@ public class SAMLEndpoint {
                     }
                 }
 
-            }  else {
+            } else {
                 for (String sessionIndex : request.getSessionIndex()) {
                     String brokerSessionId = brokerUserId + "." + sessionIndex;
                     UserSessionModel userSession = session.sessions().getUserSessionByBrokerSessionId(realm, brokerSessionId);
@@ -263,7 +268,7 @@ public class SAMLEndpoint {
             builder.destination(config.getSingleLogoutServiceUrl());
             builder.issuer(issuerURL);
             JaxrsSAML2BindingBuilder binding = new JaxrsSAML2BindingBuilder()
-                        .relayState(relayState);
+                    .relayState(relayState);
             if (config.isWantAuthnRequestsSigned()) {
                 binding.signWith(realm.getPrivateKey(), realm.getPublicKey(), realm.getCertificate())
                         .signatureAlgorithm(provider.getSignatureAlgorithm())
@@ -288,6 +293,7 @@ public class SAMLEndpoint {
         private String getEntityId(UriInfo uriInfo, RealmModel realm) {
             return UriBuilder.fromUri(uriInfo.getBaseUri()).path("realms").path(realm.getName()).build().toString();
         }
+
         protected Response handleLoginResponse(String samlResponse, SAMLDocumentHolder holder, ResponseType responseType, String relayState) {
 
             try {
@@ -295,7 +301,24 @@ public class SAMLEndpoint {
                 SubjectType subject = assertion.getSubject();
                 SubjectType.STSubType subType = subject.getSubType();
                 NameIDType subjectNameID = (NameIDType) subType.getBaseID();
-                //Map<String, String> notes = new HashMap<>();
+                // Map<String, String> notes = new HashMap<>();
+                // RENATER
+                if (subjectNameID.getFormat() != null && subjectNameID.getFormat().toString().equals(JBossSAMLURIConstants.NAMEID_FORMAT_TRANSIENT.get())) {
+                    if (assertion.getAttributeStatements() != null) {
+                        for (AttributeStatementType attrStatement : assertion.getAttributeStatements()) {
+                            for (AttributeStatementType.ASTChoiceType choice : attrStatement.getAttributes()) {
+                                AttributeType attribute = choice.getAttribute();
+                                if (attribute.getFriendlyName().equals("eduPersonTargetID") || attribute.getName().equals("urn:oid:1.3.6.1.4.1.5923.1.1.1.10")) {
+                                    if (!attribute.getAttributeValue().isEmpty()) {
+                                        subjectNameID = (NameIDType) attribute.getAttributeValue().get(0);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // END-RENATER
+
                 BrokeredIdentityContext identity = new BrokeredIdentityContext(subjectNameID.getValue());
                 identity.setCode(relayState);
                 identity.getContextData().put(SAML_LOGIN_RESPONSE, responseType);
@@ -303,7 +326,7 @@ public class SAMLEndpoint {
 
                 identity.setUsername(subjectNameID.getValue());
 
-                //SAML Spec 2.2.2 Format is optional
+                // SAML Spec 2.2.2 Format is optional
                 if (subjectNameID.getFormat() != null && subjectNameID.getFormat().toString().equals(JBossSAMLURIConstants.NAMEID_FORMAT_EMAIL.get())) {
                     identity.setEmail(subjectNameID.getValue());
                 }
@@ -315,18 +338,19 @@ public class SAMLEndpoint {
                 AuthnStatementType authn = null;
                 for (Object statement : assertion.getStatements()) {
                     if (statement instanceof AuthnStatementType) {
-                        authn = (AuthnStatementType)statement;
+                        authn = (AuthnStatementType) statement;
                         identity.getContextData().put(SAML_AUTHN_STATEMENT, authn);
                         break;
                     }
                 }
-                if (assertion.getAttributeStatements() != null ) {
+                if (assertion.getAttributeStatements() != null) {
                     for (AttributeStatementType attrStatement : assertion.getAttributeStatements()) {
                         for (AttributeStatementType.ASTChoiceType choice : attrStatement.getAttributes()) {
                             AttributeType attribute = choice.getAttribute();
                             if (X500SAMLProfileConstants.EMAIL.getFriendlyName().equals(attribute.getFriendlyName())
                                     || X500SAMLProfileConstants.EMAIL.get().equals(attribute.getName())) {
-                                if (!attribute.getAttributeValue().isEmpty()) identity.setEmail(attribute.getAttributeValue().get(0).toString());
+                                if (!attribute.getAttributeValue().isEmpty())
+                                    identity.setEmail(attribute.getAttributeValue().get(0).toString());
                             }
                         }
 
@@ -339,8 +363,7 @@ public class SAMLEndpoint {
                 identity.setIdp(provider);
                 if (authn != null && authn.getSessionIndex() != null) {
                     identity.setBrokerSessionId(identity.getBrokerUserId() + "." + authn.getSessionIndex());
-                 }
-
+                }
 
                 return callback.authenticated(identity);
 
@@ -349,12 +372,9 @@ public class SAMLEndpoint {
             }
         }
 
-
-
-
         public Response handleSamlResponse(String samlResponse, String relayState) {
             SAMLDocumentHolder holder = extractResponseDocument(samlResponse);
-            StatusResponseType statusResponse = (StatusResponseType)holder.getSamlObject();
+            StatusResponseType statusResponse = (StatusResponseType) holder.getSamlObject();
             // validate destination
             if (statusResponse.getDestination() != null && !uriInfo.getAbsolutePath().toString().equals(statusResponse.getDestination())) {
                 event.event(EventType.IDENTITY_PROVIDER_RESPONSE);
@@ -373,13 +393,13 @@ public class SAMLEndpoint {
                 }
             }
             if (statusResponse instanceof ResponseType) {
-                return handleLoginResponse(samlResponse, holder, (ResponseType)statusResponse, relayState);
+                return handleLoginResponse(samlResponse, holder, (ResponseType) statusResponse, relayState);
 
             } else {
                 // todo need to check that it is actually a LogoutResponse
                 return handleLogoutResponse(holder, statusResponse, relayState);
             }
-            //throw new RuntimeException("Unknown response type");
+            // throw new RuntimeException("Unknown response type");
 
         }
 
@@ -406,10 +426,6 @@ public class SAMLEndpoint {
             return AuthenticationManager.finishBrowserLogout(session, realm, userSession, uriInfo, clientConnection, headers);
         }
 
-
-
-
-
     }
 
     protected class PostBinding extends Binding {
@@ -422,6 +438,7 @@ public class SAMLEndpoint {
         protected SAMLDocumentHolder extractRequestDocument(String samlRequest) {
             return SAMLRequestParser.parseRequestPostBinding(samlRequest);
         }
+
         @Override
         protected SAMLDocumentHolder extractResponseDocument(String response) {
             byte[] samlBytes = PostBindingUtil.base64Decode(response);
@@ -440,8 +457,6 @@ public class SAMLEndpoint {
             PublicKey publicKey = getIDPKey();
             SamlProtocolUtils.verifyRedirectSignature(publicKey, uriInfo, key);
         }
-
-
 
         @Override
         protected SAMLDocumentHolder extractRequestDocument(String samlRequest) {
