@@ -321,13 +321,15 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
             uriBuilder.queryParam(OAuth2Constants.ACR_VALUES, acr);
         }
 
-        String nonce = request.getAuthenticationSession().getClientNote(OIDCLoginProtocol.NONCE_PARAM);
-        if (nonce == null || nonce.isEmpty()) {
-            nonce = UUID.randomUUID().toString();
-            request.getAuthenticationSession().setClientNote(OIDCLoginProtocol.NONCE_PARAM, nonce);
-        }
-        if (nonce != null) {
-            uriBuilder.queryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
+        if (getConfig().isLoginNonce()) {
+            String nonce = request.getAuthenticationSession().getClientNote(OIDCLoginProtocol.NONCE_PARAM);
+            if (nonce == null || nonce.isEmpty()) {
+                nonce = UUID.randomUUID().toString();
+                request.getAuthenticationSession().setClientNote(OIDCLoginProtocol.NONCE_PARAM, nonce);
+            }
+            if (nonce != null) {
+                uriBuilder.queryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
+            }
         }
 
         return uriBuilder;
