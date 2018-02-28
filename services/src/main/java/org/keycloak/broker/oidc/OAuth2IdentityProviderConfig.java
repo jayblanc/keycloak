@@ -83,6 +83,14 @@ public class OAuth2IdentityProviderConfig extends IdentityProviderModel {
         getConfig().put("loginHint", String.valueOf(loginHint));
     }
 
+    public boolean isLoginNonce() {
+        return Boolean.valueOf(getConfig().get("loginNonce"));
+    }
+
+    public void setLoginNonce(boolean loginNonce) {
+        getConfig().put("loginNonce", String.valueOf(loginNonce));
+    }
+
     public String getPrompt() {
         return getConfig().get("prompt");
     }

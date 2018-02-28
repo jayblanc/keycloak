@@ -135,6 +135,11 @@ declare namespace Keycloak {
 		 */
 		loginHint?: string;
 
+        /**
+         * Used to include a nonce in the authorization URL.
+         */
+        loginNonce?: string;
+
 		/**
 		 * Used to tell Keycloak which IDP the user wants to authenticate with.
 		 */
