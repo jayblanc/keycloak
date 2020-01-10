@@ -108,7 +108,7 @@ public class SAMLIdentityProvider extends AbstractIdentityProvider<SAMLIdentityP
                 KeyPair keypair = new KeyPair(keys.getPublicKey(), keys.getPrivateKey());
 
                 String keyName = getConfig().getXmlSigKeyInfoKeyNameTransformer().getKeyName(keys.getKid(), keys.getCertificate());
-                binding.signWith(keyName, keypair);
+                binding.signWith(keyName, keypair, keys.getCertificate());
                 binding.signatureAlgorithm(getSignatureAlgorithm());
                 binding.signDocument();
                 if (! postBinding && getConfig().isAddExtensionsElementWithKeyInfo()) {    // Only include extension if REDIRECT binding and signing whole SAML protocol message

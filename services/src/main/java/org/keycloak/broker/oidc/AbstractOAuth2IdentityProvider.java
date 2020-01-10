@@ -359,8 +359,8 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
     }
 
     /**
-     * Get JSON property as text. JSON numbers and booleans are converted to text. Empty string is converted to null. 
-     * 
+     * Get JSON property as text. JSON numbers and booleans are converted to text. Empty string is converted to null.
+     *
      * @param jsonNode to get property from
      * @param name of property to get
      * @return string value of the property or null.
@@ -505,7 +505,7 @@ public abstract class AbstractOAuth2IdentityProvider<C extends OAuth2IdentityPro
                     .param(OAUTH2_PARAMETER_GRANT_TYPE, OAUTH2_GRANT_TYPE_AUTHORIZATION_CODE);
             return authenticateTokenRequest(tokenRequest);
         }
-        
+
     }
 
     protected String getProfileEndpointForValidation(EventBuilder event) {
