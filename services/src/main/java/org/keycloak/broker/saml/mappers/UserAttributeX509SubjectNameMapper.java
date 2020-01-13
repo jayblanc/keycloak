@@ -63,7 +63,7 @@ public class UserAttributeX509SubjectNameMapper extends AbstractIdentityProvider
         property = new ProviderConfigProperty();
         property.setName(USER_ATTRIBUTE);
         property.setLabel("User Attribute Name");
-        property.setHelpText("User attribute name to store field value.  Use email, lastName, and firstName to map to those predefined user properties.");
+        property.setHelpText("User attribute name to store field valuemvn .  Use email, lastName, and firstName to map to those predefined user properties.");
         property.setType(ProviderConfigProperty.STRING_TYPE);
         configProperties.add(property);
     }
