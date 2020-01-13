@@ -92,7 +92,7 @@ public class UserAttributeX509SubjectNameMapper extends AbstractIdentityProvider
 
     @Override
     public String getDisplayType() {
-        return "Attribute Importer";
+        return "X509 Subject Name Attribute Importer";
     }
 
     @Override
